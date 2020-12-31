@@ -17,6 +17,7 @@
   // get the update from the sensor. When enough light has reached the film, returns true.
   extern bool meter_update();
   extern void meter_set_iso(uint16_t const& iso);
+  extern void meter_set_iso(uint16_t const& iso, float percent);
   //void meter_led(byte _selector, bool _type);
   // preprocessor conditionnal inlusion for specific chip header file.
   #if defined (TSL237T)
