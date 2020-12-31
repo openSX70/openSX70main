@@ -40,7 +40,7 @@
   //----------------ISO VALUES VALUES---------------------------------------
   #define ISO_SX70 125
   #define ISO_600 640
-  #define ISO_600BW 400
+  #define FILL_FLASH_PERCENT 0.29
   #define DEFAULT_ISO ISO_SX70
   //---------------END ISO VALUES--------------------------------------------
   #define EE_ADD_CUR   4    //-> CurrentPicture --> 1-8 "Pack" picture counter
