@@ -72,8 +72,8 @@ void meter_set_iso(const uint16_t& iso){ //set the output Compare Value for Time
   }
 
   // Doing this as an alternate to setting individual magic numbers for whatever we need to do.
-  // Hopefully won't cost too much as far as time cost while making it easier to configure down the line.
-  // EX 29% for fill flash and 50% for auto multiple exposure. 
+  // Hopefully won't take too much processing time. The main benefit I see from this is ease of configuration.
+  // EX 29% for fill flash and 50% for auto mode double exposure. 
   void meter_set_iso(const uint16_t& iso, float percent){
       if (iso == ISO_600){
         outputCompare = round(A600 * percent);
