@@ -62,16 +62,24 @@
     //TIMSK1 &= ~(1 << OCIE1A); // turn off the timer interrupt
   }
   
-  void meter_set_iso(const uint16_t& iso){ //set the output Compare Value for Timer1 -- Magicnumber for ISO
-      if (iso == ISO_600) {
-        outputCompare = A600;
-      } else if (iso == ISO_SX70) {
-        outputCompare = A100;
-      }/* else if (iso == ISO_600BW){
-        outputCompare = A400;
-      }*/
-      else{
-        outputCompare = iso; //FF Delay Magicnumber      
+void meter_set_iso(const uint16_t& iso){ //set the output Compare Value for Timer1 -- Magicnumber for ISO
+    if (iso == ISO_600){
+      outputCompare = A600;
+    } 
+    else if (iso == ISO_SX70){
+      outputCompare = A100;
+    }
+  }
+
+  // Doing this as an alternate to setting individual magic numbers for whatever we need to do.
+  // Hopefully won't cost too much as far as time cost while making it easier to configure down the line.
+  // EX 29% for fill flash and 50% for auto multiple exposure. 
+  void meter_set_iso(const uint16_t& iso, float percent){
+      if (iso == ISO_600){
+        outputCompare = round(A600 * percent);
+      } 
+      else if (iso == ISO_SX70){
+        outputCompare = round(A100 * percent);
       }
   }
   
