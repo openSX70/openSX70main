@@ -30,6 +30,9 @@ int activeISO;
 //static int checkedcount;
 static int inizialized = 0;
 static int metercount;
+
+extern bool mEXPFirstRun = false;
+extern bool multipleExposureMode = false;
 static int multipleExposureCounter = 0;
 /*
 #if SONAR == 0 
@@ -127,6 +130,7 @@ void setup() {//setup - Inizialize
 
 /*LOOP LOOP LOOP LOOP LOOP LOOP LOOP LOOP LOOP LOOP LOOP LOOP LOOP LOOP LOOP*/
 void loop() {
+  savedISO = ReadISO();
   selector = myDongle.selector();
   #if SONAR
     preFocus();
@@ -136,36 +140,26 @@ void loop() {
   #if SONAR
     unfocusing();
   #endif
-  //checkFilmCount();
-  //printReadings();
 }
 
 camera_state do_state_darkslide (void) {
-  /*
-    I have all the darkslide code in the state simply because it should only run once a "cycle"
-    Under normal operation the camera will be reset by the door being opened and closed when a new 
-    pack in inserted. I saw no reason to have a separate function for it since this code will not be
-    called anywhere else.
-  */
   camera_state result = STATE_DARKSLIDE;
   if (digitalRead(PIN_S8) == HIGH && digitalRead(PIN_S9) == LOW){
     currentPicture = 0; 
     WritePicture(currentPicture);
     checkFilmCount();
-    //OPTION TURN ON AND OFF LED WHILE DARKSLIDE EJECT
     if(myDongle.checkDongle() == 0){
-      openSX70.darkslideEJECT(); //Disabled Darkslide eject to change Filmpack in Darkroom
+      openSX70.darkslideEJECT(); 
     }
     else{
-      myDongle.dongleLed (GREEN, HIGH); //green uDongle LED on while ejecting Darkslide
-      openSX70.darkslideEJECT(); //Disabled Darkslide eject to change Filmpack in Darkroom
-      myDongle.dongleLed (GREEN, LOW); //switching off green uDongle LED
+      myDongle.dongleLed(GREEN, HIGH); //green uDongle LED on while ejecting Darkslide
+      openSX70.darkslideEJECT();
+      myDongle.dongleLed(GREEN, LOW); //switching off green uDongle LED
     }
-
     #if SIMPLEDEBUG
-        Serial.println("STATE1: EJECT DARK SLIDE");
-        Serial.print("currentPicture on Darkslide eject: ");
-        Serial.println(currentPicture);
+      Serial.println("STATE1: EJECT DARK SLIDE");
+      Serial.print("currentPicture on Darkslide eject: ");
+      Serial.println(currentPicture);
     #endif
   }
   else{
@@ -197,21 +191,23 @@ camera_state do_state_darkslide (void) {
 
 camera_state do_state_noDongle (void){
   camera_state result = STATE_NODONGLE;
-  savedISO = ReadISO();
+  //savedISO = ReadISO();
   #if SONAR
   if ((digitalRead(PIN_S1F) == HIGH)){ //Do only if S1F is pressed
   #endif
   LightMeterHelper(1);
   if ((sw_S1.clicks == -1) || (sw_S1.clicks == 1)){
     LightMeterHelper(0); 
-    openSX70.AutoExposure(savedISO, false);
+    beginExposure();
+    openSX70.AutoExposure(savedISO);
     sw_S1.Reset();
   }
   #if DOUBLECLICK
   if (sw_S1.clicks == 2){ //Doubleclick the Red Button with no Dongle inserted
     LightMeterHelper(0); 
+    beginExposure();
     delay (10000);
-    openSX70.AutoExposure(savedISO, false);
+    openSX70.AutoExposure(savedISO);
     sw_S1.Reset();
   }
   #endif
@@ -219,14 +215,14 @@ camera_state do_state_noDongle (void){
   }
   #endif
   //Checks for dongle or flashbar insertion
-  if (myDongle.checkDongle() > 0){ //((selector <= 15) && (myDongle.checkDongle() > 0))
+  if (myDongle.checkDongle() > 0){
     #if STATEDEBUG
       Serial.println("TRANSITION TO STATE_DONGLE FROM STATE_NODONGLE");
     #endif
     result = STATE_DONGLE;
     //myDongle.initDS2408();
     if(((myDongle.switch1() == 1) && (myDongle.switch2() == 1))){
-      saveISOChange(); //saveISOChange on Dongle insertion if both switches are ON
+      saveISOChange();
     }
     else if(myDongle.selector()<=13){ //Dont blink on AUTOMODE
       //Serial.println("Transition from no dongle to dongle");
@@ -261,29 +257,34 @@ camera_state do_state_dongle (void){
   
   if ((sw_S1.clicks == -1) || (sw_S1.clicks > 0)){
     LightMeterHelper(0); //Turns off LMHelper on picutre Taking
+    beginExposure(); //may just move this directly before each other call. may feel clunky
     if(switch2 == 1){
       switch2Function(0); //switch2Function Manual Mode
     }
-    if((selector>=0) && (selector<12)){ //MANUAL SPEEDS  
-      openSX70.ManualExposure(int(selector), false);
+
+    if((selector>=0) && (selector<=3)){ //fast manual speeds
+      openSX70.VariableManualExposure(savedISO);
+    }
+    else if((selector>3) && (selector<12)){ //MANUAL SPEEDS  
+      openSX70.ManualExposure();
     }
     else if(selector == 12){ //POST
       lmTimer_stop();
       turnLedsOff();
-      openSX70.ShutterT(false);
+      openSX70.ShutterT();
     }
     else if(selector == 13){ //POSB
       lmTimer_stop();
       turnLedsOff(); //why?
-      openSX70.ShutterB(false);
+      openSX70.ShutterB();
     }
     else{ //Auto catch-all. Passes the value stored in the ShutterSpeed list at the selector value
       switch(ShutterSpeed[selector]){
         case AUTO100:
-          openSX70.AutoExposure(ISO_SX70, false);
+          openSX70.AutoExposure(ISO_SX70);
           break;
         case AUTO600:
-          openSX70.AutoExposure(ISO_600, false);
+          openSX70.AutoExposure(ISO_600);
           break;
       }
     }
@@ -294,7 +295,6 @@ camera_state do_state_dongle (void){
   // Dongle Removed
   if (myDongle.checkDongle() == 0){
     result = STATE_NODONGLE;
-    prev_selector = 200;
     #if STATEDEBUG
         Serial.println("TRANSITION TO STATE_NODONGLE FROM STATE_DONGLE");
     #endif
@@ -302,6 +302,8 @@ camera_state do_state_dongle (void){
   // Multiple Exposure switch flipped
   else if ((switch1 == 1) && (switch2 == 0)){
     result = STATE_MULTI_EXP;
+    multipleExposureMode = true;
+    mEXPFirstRun = true;
     #if STATEDEBUG
         Serial.println("TRANSITION TO STATE_MULTI_EXP FROM STATE_DONGLE");
     #endif
@@ -312,22 +314,24 @@ camera_state do_state_dongle (void){
 
 camera_state do_state_flashBar (void){
   camera_state result = STATE_FLASHBAR;
-  activeISO = ReadISO();
   if ((sw_S1.clicks == -1) || (sw_S1.clicks == 1))
   {
-    //openSX70.FlashBAR();
-    openSX70.AutoExposureFF(activeISO);
+    beginExposure();
+    openSX70.AutoExposureFF(savedISO);
     sw_S1.Reset();
     checkFilmCount();
   }
+  #if DOUBLECLICK
   if (sw_S1.clicks == 2)
   {
-    switch2Function(3); //Switch Two Function in Flash Mode
-    //openSX70.FlashBAR();
-    openSX70.AutoExposureFF(activeISO);
+    beginExposure();
+    delay(10000); //Switch Two Function in Flash Mode
+    openSX70.AutoExposureFF(savedISO);
     sw_S1.Reset();
     checkFilmCount(); 
   } 
+  #endif
+  
   if ((selector == 200) && (myDongle.checkDongle() == 0)){
     result = STATE_NODONGLE;
     #if STATEDEBUG
@@ -356,33 +360,42 @@ camera_state do_state_multi_exp (void){
   
   if ((sw_S1.clicks == -1) || (sw_S1.clicks > 0)){
     LightMeterHelper(0); //Turns off LMHelper on picutre Taking
-    if(switch1 == 1){ //Why Switch1 == true?!
+    if(switch1 == 1){ //Why Switch1 == true?!    This is for checking if we are still taking mexp pics
+      if(mEXPFirstRun){
+        beginExposure();
+        mEXPFirstRun = false;
+      }
       if(switch2 == 1){
         switch2Function(0);
       }
-      if((selector>=0) && (selector<12)){ //MANUAL SPEEDS
-        openSX70.ManualExposure(selector, true);
+
+      if((selector>=0) && (selector<=3)){ //fast manual speeds
+        openSX70.VariableManualExposure(savedISO);
+        multipleExposureCounter++;
+      }
+      else if((selector>3) && (selector<12)){ //MANUAL SPEEDS  
+        openSX70.ManualExposure();
         multipleExposureCounter++;
       }
       else if(selector == 12){ //POST
         lmTimer_stop();
         turnLedsOff();
-        openSX70.ShutterT(true);
+        openSX70.ShutterT();
         multipleExposureCounter++;
       }
       else if(selector == 13){ //POSB
         lmTimer_stop();
         turnLedsOff(); //why?
-        openSX70.ShutterB(true);
+        openSX70.ShutterB();
         multipleExposureCounter++;
       }
       else{ //Auto catch-all. Passes the value stored in the ShutterSpeed list at the selector value
         switch(ShutterSpeed[selector]){
         case AUTO100:
-          openSX70.AutoExposure(ISO_SX70, true);
+          openSX70.AutoExposure(ISO_SX70);
           break;
         case AUTO600:
-          openSX70.AutoExposure(ISO_600, true);
+          openSX70.AutoExposure(ISO_600);
           break;
       }
         multipleExposureCounter++;
@@ -399,12 +412,11 @@ camera_state do_state_multi_exp (void){
       #endif
     }
     sw_S1.Reset();
-    checkFilmCount();
   }
 
   if(switch1 == 0 && multipleExposureCounter == 0){
     result = STATE_DONGLE;
-
+    multipleExposureMode = false;
     #if STATEDEBUG
       Serial.println("TRANSITION TO STATE_DONGLE FROM STATE_MULTI_EXP");
     #endif
@@ -450,6 +462,17 @@ void unfocusing(){
   }
 }
 #endif
+
+//Added to remove check for multiple exposure mode from standard manual exposure state. 
+//Offload the check to multiple exposure state
+void beginExposure(){
+  currentPicture++;
+  WritePicture(currentPicture);
+
+  openSX70.shutterCLOSE();
+  delay(100);
+  openSX70.mirrorUP();
+}
 
 void turnLedsOff(){ //todo:move to camerafunction
    digitalWrite(PIN_LED1, LOW);
@@ -666,10 +689,6 @@ void switch2Function(int mode) {
     #endif
     delay(1000);
   }
-  //else {
-    //return;
-  //}
-  //return;
 }
 
 void checkFilmCount(){
@@ -749,71 +768,49 @@ void normalOperation(){
       //   *  MXSHOTS >= 1
     sw_S1.Update();
   }
-  //prev_selector = selector; //prevents green blink after ISO change
 }
 
 void saveISOChange() {
   int _selectedISO;
   selector = myDongle.selector();
-
-  //TODO ADD ANALOGDONGLE MODE!!!!!!!!!!!
-  //if ((switch2 == 1) && (switch1 == 1)) { //Save ISO Mode
-    savedISO = ReadISO(); //read the savedISO from the EEPROM
-    if (((ShutterSpeed[selector]) == AUTO600)) {
-      _selectedISO = ISO_600;
-    }
-    else if (((ShutterSpeed[selector]) == AUTO100)) {
-      _selectedISO = ISO_SX70;
-    }
-    else {
-      //no ISO Selected
-      _selectedISO = DEFAULT_ISO;
-    }
-    if (savedISO != _selectedISO) { //Check if new ISO is diffrent to the ISO saved in EEPROM
-      #if SIMPLEDEBUG
-        Serial.print("SaveISOChange() Function: ");
-        Serial.print("ISO has changed, previos saved ISO (from EEPROM): ");
-        Serial.println(savedISO);
-        Serial.print("Saving new selected ISO ");
-        Serial.print(_selectedISO);
-        Serial.println(" to the EEPROM");
-      #endif
-      activeISO = _selectedISO; //Save selectedISO to volatile Variable activeISO
-      WriteISO(_selectedISO); //Write ISO to EEPROM
-      savedISO = ReadISO();
-      BlinkISORed();
-      //return;
-    }
-    else{ //took this out on 26.10.
-      #if SIMPLEDEBUG
-        Serial.print("SaveISOChange() Function: ");
-        Serial.println("savedISO is equal to selected ISO, dont save!");
-      #endif
-      activeISO = _selectedISO;
-      BlinkISORed(); //Blink ISO Red
-      //return;
-    }
-    prev_selector = selector; //prevents green blink after ISO change
-  //}
+  savedISO = ReadISO(); //read the savedISO from the EEPROM
+  if (((ShutterSpeed[selector]) == AUTO600)) {
+    _selectedISO = ISO_600;
+  }
+  else if (((ShutterSpeed[selector]) == AUTO100)) {
+    _selectedISO = ISO_SX70;
+  }
+  else {
+    _selectedISO = DEFAULT_ISO;
+  }
+  if (savedISO != _selectedISO) { //Check if new ISO is diffrent to the ISO saved in EEPROM
+    #if SIMPLEDEBUG
+      Serial.print("SaveISOChange() Function: ");
+      Serial.print("ISO has changed, previos saved ISO (from EEPROM): ");
+      Serial.println(savedISO);
+      Serial.print("Saving new selected ISO ");
+      Serial.print(_selectedISO);
+      Serial.println(" to the EEPROM");
+    #endif
+    activeISO = _selectedISO; //Save selectedISO to volatile Variable activeISO
+    WriteISO(_selectedISO); //Write ISO to EEPROM
+    savedISO = ReadISO();
+    BlinkISORed();
+  }
+  else{
+    #if SIMPLEDEBUG
+      Serial.print("SaveISOChange() Function: ");
+      Serial.println("savedISO is equal to selected ISO, dont save!");
+    #endif
+    activeISO = _selectedISO;
+    BlinkISORed(); //Blink ISO Red
+  }
+  prev_selector = selector; //prevents green blink after ISO change
 }
 
 void LightMeterHelper(byte ExposureType){
-    int helperstatus = openSX70.getLIGHTMETER_HELPER();
-    if(helperstatus==true){
-      //if(metercount==2){ //Lightmeter only on every 3th Cycle of Loop
-        meter_led(selector, ExposureType);
-        metercount=0;
-        /*#if ADVANCEDEBUG
-          Serial.print("Lightmeter Helper Status:");
-          Serial.print(helperstatus);
-          Serial.print(", ExposureType:  ");
-          Serial.print(ExposureType);
-          Serial.print(", Selector: ");
-          Serial.println(selector);
-        #endif*/
-      //}
-      //else{
-      //  metercount++;
-      //}
-    }
+  if(openSX70.getLIGHTMETER_HELPER()){
+    meter_led(selector, ExposureType);
+    metercount=0;
+  }
 }

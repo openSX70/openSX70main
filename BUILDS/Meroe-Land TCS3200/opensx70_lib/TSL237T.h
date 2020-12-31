@@ -40,7 +40,7 @@
   void meter_led(byte _selector, byte _type);
   
   // Init timer 1 for reading sensor, enable sensor
-  void tsl237_init();
+  void lmTimer_init();
   void lmTimer_stop();
   
   // Start to integrate measure.

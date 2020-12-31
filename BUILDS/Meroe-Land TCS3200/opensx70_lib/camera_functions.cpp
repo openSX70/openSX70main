@@ -7,12 +7,13 @@
 #include "settings.h"
 #include "uDongle2.h"
 
-static bool multipleExposureMode = false;
+extern bool mEXPFirstRun;
+extern bool multipleExposureMode;
 extern int selector;
+
 int GTD = 0;
 
-Camera::Camera(uDongle *dongle)
-{
+Camera::Camera(uDongle *dongle){
   _dongle = dongle;
   //   io_init();
   //  init_EEPROM();
@@ -65,8 +66,7 @@ int Camera::getGTD() {
 }
 */
 
-void Camera::S1F_Focus()
-{
+void Camera::S1F_Focus(){
     //int i=0;
     #if FOCUSDEBUG
       Serial.println ("Focus on");
@@ -86,15 +86,12 @@ void Camera::S1F_Focus()
     return;
 }
 
-int Camera::S1F_Focus1()
-{
-    //int i=0;
+int Camera::S1F_Focus1(){
     #if FOCUSDEBUG
       Serial.println ("Focus on");
     #endif
     pinMode(PIN_S1F_FBW, OUTPUT);
     digitalWrite(PIN_S1F_FBW, HIGH);
-    //Uncommented that on 26.10.
     int i = 0;
     while(getGTD()!=1){
       i++;
@@ -106,18 +103,39 @@ int Camera::S1F_Focus1()
         return 0;
       } 
     }
-    //26.10.
     return 1;
 }
 
-void Camera::S1F_Unfocus()
-{
+void Camera::S1F_Unfocus(){
     #if FOCUSDEBUG
       Serial.println ("Focus off");
     #endif
     pinMode(PIN_S1F_FBW, OUTPUT);
     digitalWrite (PIN_S1F_FBW, LOW);
     return;
+}
+
+void Camera::ExposureStart(){
+  int i = 0;
+  while(S1F_Focus1()!=1){
+    i++;
+    Serial.println("Wait for GTD");
+    if(i>=20){
+      break;
+    }
+  }
+  
+  //while(getGTD()!=1){ //Not sure if this is nececcary!!!
+  //if(GTD==1)
+  //  break;
+  //S1F_Focus();
+
+  //Serial.println("getGTD");
+  //delay(1000);
+  //}
+  
+  return;
+  //delay(200);
 }
 #endif
 
@@ -128,20 +146,18 @@ void Camera::SelfTimerMUP(){
     Camera::mirrorUP();
 }
 
-void Camera::shutterCLOSE()
-{
+void Camera::shutterCLOSE(){
   #if BASICDEBUG
     Serial.println ("shutterCLOSE");
   #endif
-    Camera::HighSpeedPWM();
-    analogWrite(PIN_SOL1, 255);
-    delay (PowerDownDelay);
-    analogWrite (PIN_SOL1, PowerDown);
-    return;
+  Camera::HighSpeedPWM();
+  analogWrite(PIN_SOL1, 255);
+  delay (PowerDownDelay);
+  analogWrite (PIN_SOL1, PowerDown);
+  return;
 }
 
-void Camera::shutterOPEN()
-{
+void Camera::shutterOPEN(){
   #if BASICDEBUG
     Serial.println ("shutterOPEN");
   #endif
@@ -149,24 +165,21 @@ void Camera::shutterOPEN()
   return; //Added 26.10.
 }
 
-void Camera::motorON()
-{
-#if BASICDEBUG
-  Serial.println("motorON");
-#endif
+void Camera::motorON(){
+  #if BASICDEBUG
+    Serial.println("motorON");
+  #endif
   digitalWrite(PIN_MOTOR, HIGH);
 }
 
-void Camera::motorOFF()
-{
-#if BASICDEBUG
-  Serial.println ("motorOFF");
-#endif
+void Camera::motorOFF(){
+  #if BASICDEBUG
+    Serial.println ("motorOFF");
+  #endif
   digitalWrite(PIN_MOTOR, LOW);
 }
 
-void Camera::mirrorDOWN()
-{
+void Camera::mirrorDOWN(){
   #if BASICDEBUG
     Serial.println ("mirrorDOWN");
   #endif
@@ -180,15 +193,13 @@ void Camera::mirrorDOWN()
   
 }
 
-void Camera::mirrorUP()
-{
+void Camera::mirrorUP(){
   #if BASICDEBUG
     Serial.println ("mirrorUP");
   #endif
   motorON ();
 
-  while (DebouncedRead(PIN_S5) != HIGH)
-  {
+  while (DebouncedRead(PIN_S5) != HIGH){
     #if BASICDEBUG
       Serial.println("Wait for S5 to go low");
     #endif
@@ -197,8 +208,7 @@ void Camera::mirrorUP()
   motorOFF ();
 }
 
-void Camera::darkslideEJECT()
-{
+void Camera::darkslideEJECT(){
   #if SIMPLEDEBUG
     Serial.println ("darkslideEJECT");
   #endif
@@ -208,8 +218,7 @@ void Camera::darkslideEJECT()
   Camera::shutterOPEN();
 }
 
-void Camera::DongleFlashNormal()
-{
+void Camera::DongleFlashNormal(){
   pinMode(PIN_S2, OUTPUT);
   digitalWrite(PIN_SOL2, LOW);      //So FFA recognizes the flash as such
   digitalWrite(PIN_FF, HIGH);       //FLASH TRIGGERING
@@ -218,8 +227,9 @@ void Camera::DongleFlashNormal()
   pinMode(PIN_SOL2, INPUT_PULLUP);  //S2 back to dongle mode
 }
 
+/*
 void DongleFlashF8()
-{ /*
+{ 
     #if SIMPLEDEBUG
     Serial.println ("DONGLE FLASH F8");
     #endif
@@ -258,22 +268,18 @@ void DongleFlashF8()
      shutterOPEN();
      mxshots = 0;
      return;
-    }*/
-}
+    }
+}*/
 
-void Camera::Ydelay ()
-{
-  //Just a 120ms delay.
+void Camera::Ydelay (){
   delay (120);
 }
 
-bool Camera::DebouncedRead(uint8_t pin)
-{
+bool Camera::DebouncedRead(uint8_t pin){
   pinMode(pin, INPUT_PULLUP); // GND
   bool lastState = digitalRead(pin);
   uint8_t stablecount = 0;
-  while (stablecount < DEBOUNCECOUNT)
-  {
+  while (stablecount < DEBOUNCECOUNT){
     delay(1);
     bool thisState = digitalRead(pin);
     if (thisState == lastState)
@@ -285,8 +291,7 @@ bool Camera::DebouncedRead(uint8_t pin)
   return lastState;
 }
 
-void Camera::HighSpeedPWM()
-{
+void Camera::HighSpeedPWM(){
   const byte n =224;      // for example, 71.111 kHz
   //PWM high speed
   //one N_Mosfet powerdown
@@ -322,6 +327,7 @@ void Camera::BlinkTimerDelay(byte led1, byte led2, byte time) {
   //*******************************************************
   uint32_t steps = (time * 1000) / 4;
   // DS2408 and DONGLE LED BLINK
+  /*
   #if SONAR
     S1F_Unfocus(); //Camera Unfocus and start Focus again an almost end of the SelfTimer
   #endif
@@ -335,7 +341,8 @@ void Camera::BlinkTimerDelay(byte led1, byte led2, byte time) {
   Camera::Blink (80, steps, led1, PIN_LED2, 2);
   Camera::Blink (80, steps, led2, PIN_LED1, 2);
   }
-  /*
+  */
+
   // DS2408 LED BLINK
   #if SONAR
     S1F_Unfocus(); //Camera Unfocus and start Focus again an almost end of the SelfTimer
@@ -350,51 +357,47 @@ void Camera::BlinkTimerDelay(byte led1, byte led2, byte time) {
   Camera::Blink (80, steps, led1, 2);
   Camera::Blink (80, steps, led2, 2);
 }
-*/
+
 
 // blink (blink interval=blinking speed, timer=duration blinking, Pin=pin of LED
 //type 1 = ONBOARD LED
 //type 2 = DONGLE LED
 
-void Camera::Blink(unsigned int interval, int timer, int Pin, byte type)
-{
+void Camera::Blink(unsigned int interval, int timer, int Pin, byte type){
   int ledState = LOW;             // ledState used to set the LED
   pinMode(Pin, OUTPUT);
   uint32_t previousMillis = 0;        // will store last time LED was updated
   uint32_t currentMillisTimer = millis();
-  while (millis() < (currentMillisTimer + timer))
-  {
+  while (millis() < (currentMillisTimer + timer)){
     uint32_t currentMillis = millis();
     if (currentMillis - previousMillis >= interval) {
       // save the last time you blinked the LED
       previousMillis = currentMillis;
       // if the LED is off turn it on and vice-versa:
-      if (ledState == 0) {
+      if (ledState == 0){
         ledState = 1;
-      } else {
+      } 
+      else{
         ledState = 0;
       }
       // set the LED with the ledState of the variable:
-      if (type == 1) {
-        //        Serial.println ("TYPE 1 - Blink on PCB");
+      if (type == 1){
         digitalWrite (Pin, ledState);
-      }  else if (type == 2) {
-        //        Serial.println ("TYPE 2 - Blink on DONGLE");
+      } 
+      else if (type == 2){
         _dongle->Write_DS2408_PIO (Pin, ledState);
       }
     }
   }
 }
 
-void Camera::Blink (unsigned int interval, int timer, int PinDongle, int PinPCB, byte type)
-{
+void Camera::Blink (unsigned int interval, int timer, int PinDongle, int PinPCB, byte type){
   int ledState = LOW;             // ledState used to set the LED
   pinMode(PinDongle, OUTPUT);
   pinMode(PinPCB, OUTPUT);
   uint32_t previousMillis = 0;        // will store last time LED was updated
   uint32_t currentMillisTimer = millis();
-  while (millis() < (currentMillisTimer + timer))
-  {
+  while (millis() < (currentMillisTimer + timer)){
     uint32_t currentMillis = millis();
     if (currentMillis - previousMillis >= interval) {
       // save the last time you blinked the LED
@@ -402,14 +405,16 @@ void Camera::Blink (unsigned int interval, int timer, int PinDongle, int PinPCB,
       // if the LED is off turn it on and vice-versa:
       if (ledState == 0) {
         ledState = 1;
-      } else {
+      } 
+      else {
         ledState = 0;
       }
       // set the LED with the ledState of the variable:
       if (type == 1) {
         //Serial.println ("TYPE 1 - PCB Only");
         digitalWrite (PinPCB, ledState);
-      }  else if (type == 2) {
+      }  
+      else if (type == 2) {
         //Serial.println ("TYPE 2 - PCB and DONGLE");
         digitalWrite (PinPCB, ledState);
         _dongle->Write_DS2408_PIO (PinDongle, ledState);
@@ -419,26 +424,18 @@ void Camera::Blink (unsigned int interval, int timer, int PinDongle, int PinPCB,
 }
 
 
-void Camera::ManualExposure(int notusingprobably, bool _mEXP) //ManualExposure
-{
+void Camera::ManualExposure(){
+  //changed sonar compile check
+  #if SONAR
   Camera::ExposureStart();
-  if(_mEXP == false){
-    currentPicture++;
-    WritePicture(currentPicture);
-  }
+  #endif
+
   #if SIMPLEDEBUG
     Serial.print("take single Picture on  Manual Mode");
-    if(_mEXP){
-      Serial.print(", Multiple Exposure on");
-    }
     Serial.print(", current Picture: ");
     Serial.println(currentPicture);
   #endif
-  if(multipleExposureMode == false){
-    Camera::shutterCLOSE ();
-    delay (100);
-    Camera::mirrorUP();
-  }
+
   pinMode(PIN_S3, INPUT_PULLUP); // GND
   while (digitalRead(PIN_S3) != HIGH){            //waiting for S3 to OPEN˚
      #if BASICDEBUG
@@ -448,8 +445,7 @@ void Camera::ManualExposure(int notusingprobably, bool _mEXP) //ManualExposure
   delay (YDelay);
 
   int ShutterSpeedDelay = ((ShutterSpeed[selector]) + ShutterConstant);
-  if (selector >= 6)
-  {
+  if (selector >= 6){
     ShutterSpeedDelay = (ShutterSpeedDelay - flashDelay);
   }
   #if ADVANCEDEBUG
@@ -470,8 +466,7 @@ void Camera::ManualExposure(int notusingprobably, bool _mEXP) //ManualExposure
   while (millis() <= (initialMillis + ShutterSpeedDelay)){
     //Take the Picture
   }
-  if (selector >= 3) // changed the flash selection
-  {
+  if (selector >= 3){
     #if SIMPLEDEBUG
         Serial.println("FF - Fill Flash");
     #endif
@@ -480,7 +475,7 @@ void Camera::ManualExposure(int notusingprobably, bool _mEXP) //ManualExposure
   #if LMDEBUG
     uint32_t shutterCloseTime = millis(); //Shutter Debug
   #endif
-  Camera::ExposureFinish(_mEXP);
+  Camera::ExposureFinish();
   #if LMDEBUG
       uint32_t exposureTime = shutterCloseTime - initialMillis; //Shutter Debug
       Serial.print("ExposureTime on Manualmode: ");
@@ -489,25 +484,85 @@ void Camera::ManualExposure(int notusingprobably, bool _mEXP) //ManualExposure
   return; //Added 26.10.
 }
 
-void Camera::AutoExposure(int _myISO, bool _mEXP)
-{
+/*
+  Might add another argument to this function. May want to change how varied the shutter is 
+  based on the selector. Smaller vs larger ranges.
+*/
+void Camera::VariableManualExposure(int _myISO){
+
+  #if SONAR
   Camera::ExposureStart();
-  if(_mEXP == false){
-    currentPicture++; 
-    WritePicture(currentPicture);
-    #if SIMPLEDEBUG
-        Serial.print("take a picture on Auto Mode with ISO: ");
-        Serial.print(_myISO);
-        Serial.print(", current Picture: ");
-        Serial.println(currentPicture);
-    #endif
+  #endif
+
+  #if SIMPLEDEBUG
+    Serial.print("take single Picture on  Manual Mode");
+    Serial.print(", current Picture: ");
+    Serial.println(currentPicture);
+  #endif
+
+  pinMode(PIN_S3, INPUT_PULLUP); // GND
+  while (digitalRead(PIN_S3) != HIGH){            //waiting for S3 to OPEN˚
+     #if BASICDEBUG
+     Serial.println("waiting for S3 to OPEN");
+     #endif
+  }
+  delay (YDelay);
+
+  int ShutterSpeedDelay = ShutterSpeed[selector];
+  int MinShutterSpeedDelay = (ShutterSpeedDelay - 15);
+  
+  #if ADVANCEDEBUG
+    extern int selector;
+    Serial.print("Manual Exposure Debug: ");
+    Serial.print("ShutterSpeed[");
+    Serial.print(selector);
+    Serial.print("] :");
+    Serial.println(ShutterSpeed[selector]);
+    Serial.print("ShutterConstant:");
+    Serial.println(ShutterConstant);
+    Serial.print("ShutterSpeedDelay:");
+    Serial.println(ShutterSpeedDelay);
+  #endif
+
+  meter_set_iso(_myISO);
+  meter_init();
+  meter_integrate();
+
+  uint32_t initialMillis = millis();
+  Camera::shutterOPEN();
+  delay(MinShutterSpeedDelay);
+  while(meter_update() == false){
+    if(millis() >= (initialMillis + ShutterSpeedDelay)){
+      break;
+    }
   }
 
+  #if LMDEBUG
+    uint32_t shutterCloseTime = millis(); //Shutter Debug
+  #endif
+  Camera::ExposureFinish();
+  #if LMDEBUG
+      uint32_t exposureTime = shutterCloseTime - initialMillis; //Shutter Debug
+      Serial.print("ExposureTime on Manualmode: ");
+      Serial.println(exposureTime);
+  #endif
+  return; //Added 26.10.
+}
+
+void Camera::AutoExposure(int _myISO){
+  #if SONAR
+  Camera::ExposureStart();
+  #endif
+
+  #if SIMPLEDEBUG
+    Serial.print("take a picture on Auto Mode with ISO: ");
+    Serial.print(_myISO);
+    Serial.print(", current Picture: ");
+    Serial.println(currentPicture);
+  #endif
+
   meter_set_iso(_myISO); 
-  if(multipleExposureMode == false){
-    Camera::shutterCLOSE();
-    Camera::mirrorUP();   
-  }
+
   pinMode(PIN_S3, INPUT_PULLUP); // GND
   while (digitalRead(PIN_S3) != HIGH){            //waiting for S3 to OPEN˚
      #if BASICDEBUG
@@ -528,7 +583,7 @@ void Camera::AutoExposure(int _myISO, bool _mEXP)
     uint32_t shutterCloseTime = millis(); //Shutter Debug
   #endif
 
-  Camera::ExposureFinish(_mEXP);
+  Camera::ExposureFinish();
 
   #if LMDEBUG
     uint32_t exposureTime = shutterCloseTime - shutterOpenTime; //Shutter Debug
@@ -538,9 +593,10 @@ void Camera::AutoExposure(int _myISO, bool _mEXP)
   return; //Added 26.10.
 }
 
-void Camera::AutoExposureFF(int _myISO)
-{
+void Camera::AutoExposureFF(int _myISO){
+  #if SONAR
   Camera::ExposureStart();
+  #endif
   #if SIMPLEDEBUG
       Serial.print("take a picture on Auto Mode + Fill Flash with ISO: ");
       Serial.print(_myISO);
@@ -622,7 +678,7 @@ void Camera::AutoExposureFF(int _myISO)
   Serial.print("FF Status: ");
   Serial.println(FFState);
   #endif
-  Camera::ExposureFinish(false);
+  Camera::ExposureFinish();
 
   #if LMDEBUG
     uint32_t exposureTime = shutterCloseTime - shutterOpenTime; //Shutter Debug
@@ -634,63 +690,18 @@ void Camera::AutoExposureFF(int _myISO)
   return; //Added 26.10.
 }
 
-void Camera::FlashBAR() //FlashBAR
+void Camera::ShutterB()
 {
-  Camera::ExposureStart();
-  #if SIMPLEDEBUG
-     Serial.print("take Camera Flashbar picture");
-     Serial.print(", current Picture: ");
-     Serial.println(currentPicture);
-  #endif
-  Camera::HighSpeedPWM();
-  analogWrite(PIN_SOL2, 255);
-  Camera::shutterCLOSE ();
-  Camera::mirrorUP();
-  pinMode(PIN_S3, INPUT_PULLUP); // GND
-  while (digitalRead(PIN_S3) != HIGH){            //waiting for S3 to OPEN˚
-     #if BASICDEBUG
-     Serial.println("waiting for S3 to OPEN");
-     #endif
-  }
-  analogWrite (PIN_SOL2, 130);
-  delay (YDelay);
-  Camera::shutterOPEN ();
-  delay (66);
-  digitalWrite(PIN_FF, HIGH);
-  delay (2);
-  analogWrite (PIN_SOL2, 0);
-  digitalWrite(PIN_FF, LOW);
-  delay (20);
-  Camera::shutterCLOSE();
   #if SONAR
-    delay(100);
-    S1F_Unfocus();
-    #if FOCUSDEBUG
-    Serial.println("Unfocus");
-    #endif
-  #endif
-  delay (200);
-  Camera::mirrorDOWN();
-  delay (200);
-  Camera::shutterOPEN();
-  currentPicture++; 
-  WritePicture(currentPicture);
-  return;
-}
-
-void Camera::ShutterB(bool mEXP)
-{
   Camera::ExposureStart();
+  #endif
+
   #if SIMPLEDEBUG
      Serial.print("take B Mode Picture");
      Serial.print(", current Picture: ");
      Serial.println(currentPicture);
   #endif
 
-  if(!multipleExposureMode){
-    Camera::shutterCLOSE ();
-    Camera::mirrorUP();
-  }
   pinMode(PIN_S3, INPUT_PULLUP); // GND
   while (digitalRead(PIN_S3) != HIGH){
      #if BASICDEBUG
@@ -698,14 +709,12 @@ void Camera::ShutterB(bool mEXP)
      #endif
   }
   delay (40);
-  if (_dongle->switch2() ==  1)
-  {
+  if (_dongle->switch2() ==  1){
     analogWrite(PIN_SOL2, 255);
   }
 
   Camera::shutterOPEN ();
-  if (_dongle->switch2() ==  1)
-  {
+  if (_dongle->switch2() ==  1){
     analogWrite(PIN_SOL2, 130);
   }
   while (digitalRead(PIN_S1) == S1Logic){
@@ -713,8 +722,7 @@ void Camera::ShutterB(bool mEXP)
   }
   Camera::FastFlash();
   Camera::shutterCLOSE ();
-  if (_dongle->switch2() ==  1)
-  {
+  if (_dongle->switch2() ==  1){
     analogWrite(PIN_SOL2, 0);
   }
   #if SONAR
@@ -725,31 +733,20 @@ void Camera::ShutterB(bool mEXP)
       #endif
   #endif
 
-  if(!mEXP){
-    delay (200);
-    Camera::mirrorDOWN ();
-    delay (200);
-    Camera::shutterOPEN();
-    currentPicture++; 
-    WritePicture(currentPicture);
-  }
+  ExposureFinish();
   return; //Added 26.10.
 }
 
-void Camera::ShutterT(bool mEXP)
-{
+void Camera::ShutterT(){
+  #if SONAR
   Camera::ExposureStart();
-  
+  #endif
+
   #if SIMPLEDEBUG
      Serial.print("take T Mode picture: ");
      Serial.print(", current Picture: ");
      Serial.println(currentPicture);
   #endif
-
-  if(!multipleExposureMode){
-    Camera::shutterCLOSE ();
-    Camera::mirrorUP();  
-  }
 
   pinMode(PIN_S3, INPUT_PULLUP); // GND
   while (DebouncedRead(PIN_S3) != HIGH){
@@ -769,8 +766,7 @@ void Camera::ShutterT(bool mEXP)
     #endif
     //do nothing
   }
-  if (digitalRead(PIN_S1) == S1Logic)
-  {
+  if (digitalRead(PIN_S1) == S1Logic){
     Camera::FastFlash();
     Camera::shutterCLOSE ();
   }
@@ -784,43 +780,11 @@ void Camera::ShutterT(bool mEXP)
   #endif
 
   //multiple exposure test (Should not work in T Mode?!)
-  if(mEXP == false){
-    delay (200);
-    Camera::mirrorDOWN ();
-    delay (200);
-    Camera::shutterOPEN();
-    currentPicture++; 
-    WritePicture(currentPicture);
-  }
+  ExposureFinish();
   return; //Addes 26.10.
 }
 
-void Camera::ExposureStart(){
-  #if SONAR
-    int i = 0;
-    while(S1F_Focus1()!=1){
-      i++;
-      Serial.println("Wait for GTD");
-      if(i>=20){
-        break;
-      }
-    }
-    
-    //while(getGTD()!=1){ //Not sure if this is nececcary!!!
-    //if(GTD==1)
-    //  break;
-    //S1F_Focus();
-
-    //Serial.println("getGTD");
-    //delay(1000);
-    //}
-    
-    return;
-    //delay(200);
-  #endif
-}
-
-void Camera::ExposureFinish(bool mEXP)
+void Camera::ExposureFinish()
 {
   Camera::shutterCLOSE();
   lmTimer_stop(); //Lightmeter Timer stop
@@ -833,7 +797,7 @@ void Camera::ExposureFinish(bool mEXP)
   #endif
   delay (200); //Was 20
 
-  if(mEXP == true){
+  if(multipleExposureMode == true){
     while(digitalRead(PIN_S1) == S1Logic){
       //wait for s1 to stop being pressed...
       #if BASICDEBUG
@@ -843,7 +807,6 @@ void Camera::ExposureFinish(bool mEXP)
     #if MXDEBUG
       Serial.println("mEXP");
     #endif
-    multipleExposureMode = true;
   }
   else if (_dongle->checkDongle() > 0){ //Dongle present
     delay (100);
@@ -900,8 +863,7 @@ void Camera::multipleExposureLastClick(){
   multipleExposureMode = false;
 }
 
-void Camera::FastFlash()
-{
+void Camera::FastFlash(){
   #if BASICDEBUG
     Serial.println("FastFlash");
   #endif

@@ -49,8 +49,6 @@
       outputCompare = A600;
     } else if (iso == ISO_SX70) {
       outputCompare = A100;
-    } else if (iso == ISO_600BW){
-      outputCompare = A400;
     }
   }
 

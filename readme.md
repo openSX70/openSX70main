@@ -1,3 +1,5 @@
+### For detailed instructions on how to operate as well as program your openSX70, please visit the [Wiki](https://github.com/openSX70/openSX70-Arduino-main/wiki)
+
 
 ## **What is openSX70?**
 

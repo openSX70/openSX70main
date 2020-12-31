@@ -243,7 +243,7 @@
   }
 
   int predictSlot(int predExpVal, int shutterSpeeds[], int slots, bool sorted) //int slot = nearest(PredictedExposure, ShutterSpeed, 11, false); //Calculate the slot
-  {      //Shutterspeeds: 17, 20, 23, 25, 30, 35, 45, 55, 68, 102, 166, 
+  {      //Shutterspeeds: 17, 20, 23, 25, 30, 35, 45, 55, 68, 102, 166, 302, 600, 1100,
     int idx = 0; // by default near first element
     int distance = abs(shutterSpeeds[idx] - predExpVal);
     for (int i = 1; i <= slots; i++)
@@ -291,18 +291,18 @@
       return;
     }
     int PredictedExposure;
-    int activeISO = ReadISO(); //read ISO from EEPROM
+    int activeISO;
     //original int PredictedExposure = meter_compute(200);
     if((ShutterSpeed[_selector]) == AUTO600)
     {
       activeISO = ISO_600;
-    }/*
-    else if((ShutterSpeed[_selector]) == AUTO600BW)
-    {
-      activeISO = ISO_600BW;
-    }*/else if((ShutterSpeed[_selector] == AUTO100))
+    }
+    else if((ShutterSpeed[_selector] == AUTO100))
     {
       activeISO = ISO_SX70;
+    }
+    else{
+      activeISO = ReadISO(); //read ISO from EEPROM
     }
       
     PredictedExposure = meter_compute(200,activeISO); //Calculates the estimated Exposure Value
