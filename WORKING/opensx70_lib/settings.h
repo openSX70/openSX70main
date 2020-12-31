@@ -41,6 +41,7 @@
   #define ISO_SX70 125
   #define ISO_600 640
   #define FILL_FLASH_PERCENT 0.29
+  //TODO! Test out an overall magic number modifier. That way people only need to edit this file rather than going through others 
   #define DEFAULT_ISO ISO_600
   //---------------END ISO VALUES--------------------------------------------
   #define EE_ADD_CUR   4    //-> CurrentPicture --> 1-8 "Pack" picture counter
