@@ -41,7 +41,7 @@
   #define ISO_SX70 125
   #define ISO_600 640
   #define FILL_FLASH_PERCENT 0.29
-  #define DEFAULT_ISO ISO_SX70
+  #define DEFAULT_ISO ISO_600
   //---------------END ISO VALUES--------------------------------------------
   #define EE_ADD_CUR   4    //-> CurrentPicture --> 1-8 "Pack" picture counter
   #define EE_ADD_ADD   30    //-> eeAddress Where to write next
