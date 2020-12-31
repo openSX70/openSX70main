@@ -13,10 +13,11 @@
   
   #define A100 400
   #define A600 150
-  #define FD100 116
-  #define FD600 44
-  #define FE100 172
-  #define FE600 65
+
+  // Fill Flash delays (old way)
+  //#define FD100 116
+  //#define FD600 44
+
   
   /* These functions are called by the main loop.
    * They provide uniform handling for whatever light sensor is used on a specific board.
