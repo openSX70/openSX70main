@@ -199,7 +199,7 @@ camera_state do_state_noDongle (void){
   if ((sw_S1.clicks == -1) || (sw_S1.clicks == 1)){
     LightMeterHelper(0); 
     beginExposure();
-    openSX70.AutoExposure(savedISO);
+    openSX70.AutoExposure(savedISO, 1);
     sw_S1.Reset();
   }
   #if DOUBLECLICK
@@ -207,7 +207,7 @@ camera_state do_state_noDongle (void){
     LightMeterHelper(0); 
     beginExposure();
     delay (10000);
-    openSX70.AutoExposure(savedISO);
+    openSX70.AutoExposure(savedISO, 1);
     sw_S1.Reset();
   }
   #endif
@@ -281,10 +281,10 @@ camera_state do_state_dongle (void){
     else{ //Auto catch-all. Passes the value stored in the ShutterSpeed list at the selector value
       switch(ShutterSpeed[selector]){
         case AUTO100:
-          openSX70.AutoExposure(ISO_SX70);
+          openSX70.AutoExposure(ISO_SX70, 1);
           break;
         case AUTO600:
-          openSX70.AutoExposure(ISO_600);
+          openSX70.AutoExposure(ISO_600, 1);
           break;
       }
     }
@@ -317,7 +317,7 @@ camera_state do_state_flashBar (void){
   if ((sw_S1.clicks == -1) || (sw_S1.clicks == 1))
   {
     beginExposure();
-    openSX70.AutoExposureFF(savedISO);
+    openSX70.AutoExposureFF(savedISO, FILL_FLASH_PERCENT);
     sw_S1.Reset();
     checkFilmCount();
   }
@@ -326,7 +326,7 @@ camera_state do_state_flashBar (void){
   {
     beginExposure();
     delay(10000); //Switch Two Function in Flash Mode
-    openSX70.AutoExposureFF(savedISO);
+    openSX70.AutoExposureFF(savedISO, FILL_FLASH_PERCENT);
     sw_S1.Reset();
     checkFilmCount(); 
   } 
@@ -392,10 +392,10 @@ camera_state do_state_multi_exp (void){
       else{ //Auto catch-all. Passes the value stored in the ShutterSpeed list at the selector value
         switch(ShutterSpeed[selector]){
         case AUTO100:
-          openSX70.AutoExposure(ISO_SX70);
+          openSX70.AutoExposure(ISO_SX70, 0.5);
           break;
         case AUTO600:
-          openSX70.AutoExposure(ISO_600);
+          openSX70.AutoExposure(ISO_600, 0.5);
           break;
       }
         multipleExposureCounter++;

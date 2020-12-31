@@ -549,7 +549,7 @@ void Camera::VariableManualExposure(int _myISO){
   return; //Added 26.10.
 }
 
-void Camera::AutoExposure(int _myISO){
+void Camera::AutoExposure(int _myISO, float percent){
   #if SONAR
   Camera::ExposureStart();
   #endif
@@ -561,7 +561,7 @@ void Camera::AutoExposure(int _myISO){
     Serial.println(currentPicture);
   #endif
 
-  meter_set_iso(_myISO); 
+  meter_set_iso(_myISO, percent); 
 
   pinMode(PIN_S3, INPUT_PULLUP); // GND
   while (digitalRead(PIN_S3) != HIGH){            //waiting for S3 to OPEN˚
@@ -593,7 +593,7 @@ void Camera::AutoExposure(int _myISO){
   return; //Added 26.10.
 }
 
-void Camera::AutoExposureFF(int _myISO){
+void Camera::AutoExposureFF(int _myISO, float percent){
   #if SONAR
   Camera::ExposureStart();
   #endif
@@ -623,14 +623,9 @@ void Camera::AutoExposureFF(int _myISO){
     Serial.print("_myISO: ");
     Serial.println(_myISO);
   #endif
-  int FD_MN = 0;  //FlashDelay Magicnumber
-  if(_myISO == ISO_SX70){
-     FD_MN = FD100;  
-  }
-  else if(_myISO == ISO_600){
-    FD_MN = FD600;
-  }
-  meter_set_iso(FD_MN);
+
+  meter_set_iso(_myISO, percent); //setting the preflash ISO to be 29% of the set ISO
+
   #if FFDEBUG
     Serial.print("FlashDelay Magicnumber: ");
     Serial.println(FD_MN);
