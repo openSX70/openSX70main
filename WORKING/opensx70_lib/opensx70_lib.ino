@@ -144,25 +144,29 @@ void loop() {
 
 camera_state do_state_darkslide (void) {
   camera_state result = STATE_DARKSLIDE;
-  if (digitalRead(PIN_S8) == HIGH && digitalRead(PIN_S9) == LOW){
-    currentPicture = 0; 
-    WritePicture(currentPicture);
-    checkFilmCount();
-    if(myDongle.checkDongle() == 0){
-      openSX70.darkslideEJECT(); 
+  #if SHUTTERDARKSLIDE
+  sw_S1.Update();
+  if ((sw_S1.clicks == -1) || (sw_S1.clicks == 1)){
+  #endif
+    if (digitalRead(PIN_S8) == HIGH && digitalRead(PIN_S9) == LOW){
+      currentPicture = 0; 
+      WritePicture(currentPicture);
+      checkFilmCount();
+      if(myDongle.checkDongle() == 0){
+        openSX70.darkslideEJECT(); 
+      }
+      else{
+        myDongle.dongleLed(GREEN, HIGH); //green uDongle LED on while ejecting Darkslide
+        openSX70.darkslideEJECT();
+        myDongle.dongleLed(GREEN, LOW); //switching off green uDongle LED
+      }
+      #if SIMPLEDEBUG
+        Serial.println("STATE1: EJECT DARK SLIDE");
+        Serial.print("currentPicture on Darkslide eject: ");
+        Serial.println(currentPicture);
+      #endif
     }
-    else{
-      myDongle.dongleLed(GREEN, HIGH); //green uDongle LED on while ejecting Darkslide
-      openSX70.darkslideEJECT();
-      myDongle.dongleLed(GREEN, LOW); //switching off green uDongle LED
-    }
-    #if SIMPLEDEBUG
-      Serial.println("STATE1: EJECT DARK SLIDE");
-      Serial.print("currentPicture on Darkslide eject: ");
-      Serial.println(currentPicture);
-    #endif
-  }
-  else{
+    
     if ((selector <= 15) && (myDongle.checkDongle() > 0)){ //((selector <= 15) && (myDongle.checkDongle() > 0))
       result = STATE_DONGLE;
       delay(100);
@@ -185,7 +189,11 @@ camera_state do_state_darkslide (void) {
         Serial.println("TRANSITION TO STATE_NODONGLE FROM STATE_DARKSLIDE");
       #endif
     }
+  #if SHUTTERDARKSLIDE
+  sw_S1.Reset();
   }
+  #endif
+  
   return result;
 }
 

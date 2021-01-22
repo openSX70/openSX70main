@@ -4,7 +4,7 @@
   //------------DEBUG OPTIONS---------------------------------------------
   #define LIGHMETER_HELPER 1
   //LIGHMETER_HELPER 0  NO helper, 1 for VE helper, 2 future dongle helper
-  #define DEBUG 1
+  #define DEBUG 0
   #define SIMPLEDEBUG 0     //Simple Debug On 1 - Off 0
   #define ADVANCEDEBUG 0    //Simple Debug On 1 - Off 0
   #define BASICDEBUG 0      // Debug of Basic Camera Functions
@@ -22,15 +22,16 @@
   #define TCS3200
   //S1Logic LOW = Alphas, Meroë, Edwin
   //#define S1Logic HIGH //= Sonar 
-  #define S1Logic HIGH
-  #define ALPHA 0
-  #define SONAR 1
+  #define S1Logic LOW
+  #define ALPHA 1
+  #define SONAR 0
   #define ORIGAMI 0
   #define ORIGAMIV1 0 //V1 Version of Origami with inverted Rotaryswitch
   #define UDONGLE 1
   #define GREEN 6 //DONGLE GREEN LED ADRESS
   #define RED 7   //DONGLE RED LED ADRESS
   #define DOUBLECLICK 0
+  #define SHUTTERDARKSLIDE 0 // makes you press shutter button to eject darkslide. This is to prevent externally powered cameras from firing the darkslide when opening.
   extern const uint8_t YDelay;
   extern const byte PowerDownDelay; //time it takes to be fully closed
   extern const byte PowerDown; //max 255 = full power/POWERUP mode
