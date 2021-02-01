@@ -42,6 +42,5 @@
   // Start to integrate measure.
   void tcs3200_start_integration();
   int nearest(int x, int myArray[], int elements, bool sorted);
-  int predictSlot(int predExpVal, int shutterSpeeds[], int slots, bool sorted); //a new version of nearest
   void meter_led(byte _selector, byte _type);
 #endif

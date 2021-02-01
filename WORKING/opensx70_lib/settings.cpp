@@ -19,7 +19,9 @@ byte lightmeterHelper = true;
 //int ShutterSpeed[] = { 3, 5, 9, 11, 20, 30, 35, 55, 166, 302, 600, 1100, POST, POSB, AUTO600, AUTO100 };  //SANTI DONGLE WHEEL
 
 // Added to remove the need to check for selector values prior to picture taking.
-int ShutterSpeed[] = { 25, 29, 32, 34, 39, 44, 64, 64, 175, 311, 609, 1109, POST, POSB, AUTO600, AUTO100 };
+int ShutterSpeed[] = {     25,   29,   32,    34,  39,   44,  64,   64,    175,  311, 609, 1109, POST, POSB, AUTO600, AUTO100 };
+//int ShutterSpeed[] = { 2000, 1000,  500,   250, 125,   60,  30,   15,      8,    4,   2,    1, T, B, AUTO600, AUTO100 };
+//                          0     1     2      3    4     5    6     7       8     9    10   11
 //OPTION line above are the wheel "raw" speeds (have to keep in mind smaller time = smaller aperture -> inefficient shutter)
 // this are the "SLOTS":+
 //int ShutterSpeed[] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, A, B, C, D, E, F };

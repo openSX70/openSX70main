@@ -880,7 +880,7 @@ void Camera::FastFlash(){
 bool Camera::setLIGHTMETER_HELPER(bool state){
   #if LMHELPERDEBUG
     Serial.print("Set Lightmeterhelper status: ");
-    Serial.println(active);
+    Serial.println(state);
   #endif
   lightmeterHelper = state;
   return state;

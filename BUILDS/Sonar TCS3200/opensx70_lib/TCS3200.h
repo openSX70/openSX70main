@@ -15,8 +15,6 @@
   #define A600 150
   #define FD100 116
   #define FD600 44
-  #define FE100 172
-  #define FE600 65
   
   /* These functions are called by the main loop.
    * They provide uniform handling for whatever light sensor is used on a specific board.
@@ -41,6 +39,5 @@
   // Start to integrate measure.
   void tcs3200_start_integration();
   int nearest(int x, int myArray[], int elements, bool sorted);
-  int predictSlot(int predExpVal, int shutterSpeeds[], int slots, bool sorted); //a new version of nearest
   void meter_led(byte _selector, byte _type);
 #endif
