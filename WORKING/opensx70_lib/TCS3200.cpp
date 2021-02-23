@@ -9,12 +9,12 @@
   uint16_t outputCompare = A100;
   
   //LM is pin 5
-  #if SONAR
+  #if SONAR_PCB
   const uint8_t TCS3200_S1_Pin = 9;
   const uint8_t TCS3200_S3_Pin = 6;
   #endif
 
-  #if ALPHA
+  #if ALPHA_PCB
   const uint8_t PIN_OE = 9;         //Pin 13 on Meroe2  (PB1-OC1A)
   const uint8_t TCS3200_S1_Pin = 2; //Pin 32 on Meroe2  (PD2-INT0)
   const uint8_t TCS3200_S3_Pin = 6; //Pin 10 on Meroe2 (PD6-AIN0)

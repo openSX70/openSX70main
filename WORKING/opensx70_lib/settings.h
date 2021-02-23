@@ -17,8 +17,10 @@
   //----------------------CAMERA PCB OPTIONS SELECTION-------------------
   #define TCS3200         //TSL237T TSL235R TCS3200
   #define S1Logic HIGH    //HIGH for sonar, LOW for Alpha
-  #define ALPHA 0         //1 if ALPHA camera/PCB
-  #define SONAR 1         //   
+  #define ALPHA 1         //1 if Alpha Camera
+  #define SONAR 0         //1 if Sonar Camera  
+  #define ALPHA_PCB 0     //1 if Alpha PCB (edwin, meroe, land)
+  #define SONAR_PCB 1     //1 if Sonar PCB 
   #define ORIGAMI 0
   #define ORIGAMIV1 0
   #define UDONGLE 1
